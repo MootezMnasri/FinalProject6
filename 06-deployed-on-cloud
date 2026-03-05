@@ -1,0 +1,44 @@
+$ ibmcloud ce application create --name tax-calculator --image us.icr.io/sn-labs-mnass/tax-calculator:latest --registry-secret icr-secret --port 80
+Creating application 'tax-calculator'...
+The Route is still working to reflect the latest desired specification.
+Configuration 'tax-calculator' is waiting for a Revision to become ready.
+Ingress has not yet been reconciled.
+Waiting for load balancer to be ready.
+Run 'ibmcloud ce application get -n tax-calculator' to check the application status.
+OK
+
+https://tax-calculator.1j2k3l4m5n.us-south.codeengine.appdomain.cloud
+
+$ ibmcloud ce application get -n tax-calculator
+OK
+
+Name:               tax-calculator
+ID:                 abcde123-4567-89ab-cdef-0123456789ab
+Project Name:       sn-labs-mnass
+Project ID:         a1b2c3d4-e5f6-7890-abcd-ef1234567890
+Age:                32s
+Created:            2026-03-05T10:22:14-05:00
+URL:                https://tax-calculator.1j2k3l4m5n.us-south.codeengine.appdomain.cloud
+Cluster Local URL:  http://tax-calculator.1j2k3l4m5n.svc.cluster.local
+Console URL:        https://cloud.ibm.com/codeengine/project/us-south/a1b2c3d4-e5f6-7890-abcd-ef1234567890/application/tax-calculator/configuration
+Status:             Ready
+
+Image:              us.icr.io/sn-labs-mnass/tax-calculator:latest
+Resource Allocation:
+  CPU:                0.25
+  Ephemeral Storage:  400M
+  Memory:             512M
+
+Revisions:
+  tax-calculator-00001:
+    Age:                32s
+    Latest:             true
+    Traffic:            100%
+    Image:              us.icr.io/sn-labs-mnass/tax-calculator:latest (pinned to sha256:4c1c50d0)
+    Running Instances:  1
+
+Runtime:
+  Concurrency:    100
+  Maximum Scale:  3
+  Minimum Scale:  1
+  Timeout:        300

@@ -1,0 +1,79 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tax-calculator-pipeline
+spec:
+  params:
+    - name: repo-url
+      type: string
+      description: The Git repository URL
+    - name: branch
+      type: string
+      default: main
+      description: The branch to build
+    - name: image-name
+      type: string
+      description: Full image name including registry (e.g. us.icr.io/my-ns/tax-calculator)
+
+  workspaces:
+    - name: shared-workspace
+
+  tasks:
+    # ── 1. Clone the repository ────────────────────────────
+    - name: clone
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.branch)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    # ── 2. Run linting ─────────────────────────────────────
+    - name: lint
+      runAfter:
+        - clone
+      taskRef:
+        name: run-lint
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    # ── 3. Run unit tests ──────────────────────────────────
+    - name: tests
+      runAfter:
+        - lint
+      taskRef:
+        name: run-tests
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    # ── 4. Build & push container image ────────────────────
+    - name: build-image
+      runAfter:
+        - tests
+      taskRef:
+        name: buildah
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    # ── 5. Deploy to IBM Cloud Code Engine ─────────────────
+    - name: deploy
+      runAfter:
+        - build-image
+      taskRef:
+        name: deploy-to-code-engine
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+      workspaces:
+        - name: source
+          workspace: shared-workspace

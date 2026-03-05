@@ -1,0 +1,74 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: npm
+spec:
+  description: >-
+    This task runs npm install to install all Node.js
+    dependencies required by the Tax Calculator application.
+  workspaces:
+    - name: source
+  params:
+    - name: ARGS
+      type: string
+      default: "install"
+      description: The npm arguments to run
+  steps:
+    - name: npm
+      image: node:lts-slim
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -e
+        echo "Running npm $(params.ARGS)..."
+        npm $(params.ARGS)
+        echo "npm $(params.ARGS) completed successfully ✓"
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: jasmine
+spec:
+  description: >-
+    This task runs the Jasmine unit test suite using npx jasmine.
+    It ensures all specs pass before the pipeline continues
+    to the build and deploy stages.
+  workspaces:
+    - name: source
+  steps:
+    - name: jasmine
+      image: node:lts-slim
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -e
+        echo "Installing dependencies..."
+        npm install
+        echo "Running Jasmine unit tests..."
+        npx jasmine
+        echo "All Jasmine tests passed ✓"
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy-to-code-engine
+spec:
+  params:
+    - name: IMAGE
+      type: string
+  workspaces:
+    - name: source
+  steps:
+    - name: deploy
+      image: icr.io/ibmcloud/ibmcloud-cli:latest
+      script: |
+        #!/usr/bin/env bash
+        set -e
+        echo "Deploying $(params.IMAGE) to IBM Cloud Code Engine..."
+        ibmcloud ce application update \
+          --name tax-calculator \
+          --image $(params.IMAGE) \
+          --port 5000 \
+          --min-scale 1 \
+          --max-scale 3
+        echo "Deployment complete ✓"

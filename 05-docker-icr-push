@@ -1,0 +1,12 @@
+$ docker push us.icr.io/sn-labs-mnass/tax-calculator:latest
+The push refers to repository [us.icr.io/sn-labs-mnass/tax-calculator]
+5f70bf18a086: Pushed
+3a7d4fa4ce28: Pushed
+e1acddbe380c: Pushed
+9f54eef41275: Pushed
+7e7121ba4486: Pushed
+2b3eec357807: Pushed
+e3abdc2e9252: Pushed
+c9282786a990: Pushed
+8acbfab0c7a5: Pushed
+latest: digest: sha256:4c1c50d0ffc614f90b93b07d778028dc765548e823f0fb4f0c3f0cd9f8c12a2d size: 2192

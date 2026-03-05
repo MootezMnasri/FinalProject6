@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Calculator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 40px 20px; }
+        .container { background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); padding: 40px; max-width: 520px; width: 100%; }
+        h1 { color: #1a1a2e; margin-bottom: 8px; font-size: 1.8rem; }
+        .subtitle { color: #666; margin-bottom: 28px; font-size: 0.95rem; }
+        label { font-weight: 600; color: #333; display: block; margin-bottom: 6px; }
+        input[type="number"] { width: 100%; padding: 12px 16px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s; }
+        input[type="number"]:focus { outline: none; border-color: #4361ee; }
+        button { width: 100%; padding: 14px; background: #4361ee; color: #fff; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: 600; cursor: pointer; margin-top: 16px; transition: background 0.2s; }
+        button:hover { background: #3a56d4; }
+        .result { margin-top: 28px; display: none; }
+        .result h2 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 16px; }
+        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .result-row:last-child { border-bottom: none; }
+        .result-label { color: #555; }
+        .result-value { font-weight: 600; color: #1a1a2e; }
+        .total-row { background: #f0f2f5; padding: 12px; border-radius: 8px; margin-top: 8px; }
+        .total-row .result-value { color: #4361ee; font-size: 1.15rem; }
+        .error { color: #e74c3c; margin-top: 12px; display: none; font-weight: 500; }
+        .brackets { margin-top: 12px; }
+        .bracket-item { font-size: 0.9rem; color: #555; padding: 4px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tax Calculator</h1>
+        <p class="subtitle">Calculate your federal income tax quickly and easily.</p>
+
+        <form id="taxForm">
+            <label for="income">Annual Gross Income ($)</label>
+            <input type="number" id="income" name="income" placeholder="e.g. 75000" min="0" step="0.01" required>
+            <button type="submit">Calculate Tax</button>
+        </form>
+
+        <p class="error" id="errorMsg"></p>
+
+        <div class="result" id="resultSection">
+            <h2>Tax Breakdown</h2>
+            <div class="result-row">
+                <span class="result-label">Gross Income</span>
+                <span class="result-value" id="resGross"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Standard Deduction</span>
+                <span class="result-value" id="resDeduction"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Taxable Income</span>
+                <span class="result-value" id="resTaxable"></span>
+            </div>
+            <div class="brackets" id="bracketsSection"></div>
+            <div class="result-row total-row">
+                <span class="result-label">Total Tax</span>
+                <span class="result-value" id="resTotalTax"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Effective Tax Rate</span>
+                <span class="result-value" id="resEffective"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('taxForm');
+        const resultSection = document.getElementById('resultSection');
+        const errorMsg = document.getElementById('errorMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            resultSection.style.display = 'none';
+
+            const income = document.getElementById('income').value;
+            const formData = new FormData();
+            formData.append('income', income);
+
+            try {
+                const response = await fetch('/calculate', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.error) {
+                    errorMsg.textContent = data.error;
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('resGross').textContent = '$' + data.gross_income.toLocaleString();
+                document.getElementById('resDeduction').textContent = '-$' + data.standard_deduction.toLocaleString();
+                document.getElementById('resTaxable').textContent = '$' + data.taxable_income.toLocaleString();
+                document.getElementById('resTotalTax').textContent = '$' + data.total_tax.toLocaleString();
+                document.getElementById('resEffective').textContent = data.effective_rate + '%';
+
+                const bracketsDiv = document.getElementById('bracketsSection');
+                bracketsDiv.innerHTML = '<p style="font-weight:600;color:#333;margin-top:8px;">Tax Brackets Applied:</p>';
+                data.tax_brackets_applied.forEach(b => {
+                    bracketsDiv.innerHTML += `<div class="bracket-item">${b.range} @ ${b.rate} = $${b.tax.toLocaleString()}</div>`;
+                });
+
+                resultSection.style.display = 'block';
+            } catch (err) {
+                errorMsg.textContent = 'Failed to calculate tax. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
