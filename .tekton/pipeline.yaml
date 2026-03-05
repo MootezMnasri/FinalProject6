@@ -32,28 +32,31 @@ spec:
         - name: output
           workspace: shared-workspace
 
-    # ── 2. Run linting ─────────────────────────────────────
-    - name: lint
+    # ── 2. Install npm dependencies ────────────────────────
+    - name: npminstall
       runAfter:
         - clone
       taskRef:
-        name: run-lint
+        name: npm
+      params:
+        - name: ARGS
+          value: "install"
       workspaces:
         - name: source
           workspace: shared-workspace
 
-    # ── 3. Run unit tests ──────────────────────────────────
+    # ── 3. Run Jasmine unit tests ──────────────────────────
     - name: tests
       runAfter:
-        - lint
+        - npminstall
       taskRef:
-        name: run-tests
+        name: jasmine
       workspaces:
         - name: source
           workspace: shared-workspace
 
     # ── 4. Build & push container image ────────────────────
-    - name: build-image
+    - name: build
       runAfter:
         - tests
       taskRef:
@@ -68,7 +71,7 @@ spec:
     # ── 5. Deploy to IBM Cloud Code Engine ─────────────────
     - name: deploy
       runAfter:
-        - build-image
+        - build
       taskRef:
         name: deploy-to-code-engine
       params:
